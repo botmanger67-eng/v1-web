@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout - MyShop</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        .order-summary {
+            background-color: #f8f9fa;
+            border-radius: 0.5rem;
+        }
+        .order-item {
+            border-bottom: 1px solid #dee2e6;
+            padding: 0.75rem 0;
+        }
+        .order-item:last-child {
+            border-bottom: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar (copied from base or extend) -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">MyShop</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    {% if current_user %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="/cart">
+                            <i class="bi bi-cart"></i> Cart
+                            {% if cart_count %}
+                            <span class="badge bg-secondary">{{ cart_count }}</span>
+                            {% endif %}
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-person"></i> {{ current_user.name }}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                            <li><a class="dropdown-item" href="/orders">My Orders</a></li>
+                            <li><a class="dropdown-item" href="/profile">Profile</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="/logout">Logout</a></li>
+                        </ul>
+                    </li>
+                    {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="/login">Login</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/register">Register</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container my-4">
+        <h1 class="mb-4">Checkout</h1>
+
+        <!-- Error/Success Messages -->
+        {% if error %}
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            {{ error }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endif %}
+        {% if success %}
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            {{ success }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endif %}
+
+        <form action="/checkout" method="post" id="checkout-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
+
+            <div class="row g-4">
+                <!-- Shipping Address -->
+                <div class="col-lg-7">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">Shipping Address</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    <label for="full_name" class="form-label">Full Name</label>
+                                    <input type="text" class="form-control" id="full_name" name="full_name" required
+                                           value="{{ form_data.full_name if form_data else current_user.name }}">
+                                </div>
+
+                                <div class="col-12">
+                                    <label for="address_line1" class="form-label">Address Line 1</label>
+                                    <input type="text" class="form-control" id="address_line1" name="address_line1" required
+                                           value="{{ form_data.address_line1 if form_data else '' }}">
+                                </div>
+
+                                <div class="col-12">
+                                    <label for="address_line2" class="form-label">Address Line 2 <span class="text-muted">(Optional)</span></label>
+                                    <input type="text" class="form-control" id="address_line2" name="address_line2"
+                                           value="{{ form_data.address_line2 if form_data else '' }}">
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label for="city" class="form-label">City</label>
+                                    <input type="text" class="form-control" id="city" name="city" required
+                                           value="{{ form_data.city if form_data else '' }}">
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label for="state" class="form-label">State / Province</label>
+                                    <input type="text" class="form-control" id="state" name="state" required
+                                           value="{{ form_data.state if form_data else '' }}">
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label for="zip_code" class="form-label">ZIP / Postal Code</label>
+                                    <input type="text" class="form-control" id="zip_code" name="zip_code" required
+                                           value="{{ form_data.zip_code if form_data else '' }}">
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label for="country" class="form-label">Country</label>
+                                    <select class="form-select" id="country" name="country" required>
+                                        <option value="">Select country...</option>
+                                        {% set countries = ['United States', 'Canada', 'United Kingdom', 'Germany', 'France', 'Australia', 'India', 'Brazil', 'Mexico', 'Japan', 'China', 'Other'] %}
+                                        {% for c in countries %}
+                                        <option value="{{ c }}" {% if (form_data and form_data.country == c) or (not form_data and c == 'United States') %}selected{% endif %}>{{ c }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+
+                                <div class="col-12">
+                                    <label for="phone" class="form-label">Phone Number <span class="text-muted">(Optional)</span></label>
+                                    <input type="tel" class="form-control" id="phone" name="phone"
+                                           value="{{ form_data.phone if form_data else '' }}">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Payment Method placeholder (optional) -->
+                    <div class="card mt-3">
+                        <div class="card-header">
+                            <h5 class="mb-0">Payment Method</h5>
+                        </div>
+                        <div class="card-body">
+                            <p class="text-muted mb-0">Payment will be collected upon delivery. No online payment required.</p>
+                            <!-- Could add radio buttons for different payment options -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Order Summary -->
+                <div class="col-lg-5">
+                    <div class="card order-summary">
+                        <div class="card-header">
+                            <h5 class="mb-0">Order Summary</h5>
+                        </div>
+                        <div class="card-body">
+                            {% if cart_items %}
+                            {% for item in cart_items %}
+                            <div class="order-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-0">{{ item.product.name }}</h6>
+                                    <small class="text-muted">Qty: {{ item.quantity }}</small>
+                                </div>
+                                <span class="fw-bold">${{ "%.2f" | format(item.product.price * item.quantity) }}</span>
+                            </div>
+                            {% endfor %}
+
+                            <hr>
+                            <div class="d-flex justify-content-between">
+                                <span>Subtotal</span>
+                                <span>${{ "%.2f" | format(subtotal) }}</span>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span>Shipping</span>
+                                <span class="text-success">Free</span>
+                            </div>
+                            <hr>
+                            <div class="d-flex justify-content-between fw-bold fs-5">
+                                <span>Total</span>
+                                <span>${{ "%.2f" | format(total) }}</span>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary w-100 mt-3 btn-lg">
+                                <i class="bi bi-check-circle"></i> Place Order
+                            </button>
+                            {% else %}
+                            <p class="text-muted">Your cart is empty.</p>
+                            <a href="/" class="btn btn-outline-primary w-100">Continue Shopping</a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-white text-center py-3 mt-5">
+        <p class="mb-0">&copy; 2025 MyShop. All rights reserved.</p>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Optional: Client-side form validation
+        (function () {
+            'use strict';
+            const form = document.getElementById('checkout-form');
+            form.addEventListener('submit', function (event) {
+                if (!form.checkValidity()) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                form.classList.add('was-validated');
+            }, false);
+        })();
+    </script>
+</body>
+</html>
