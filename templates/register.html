@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Create Account - ShopEase{% endblock %}</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Custom styles -->
+    <style>
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+        }
+        .card {
+            border: none;
+            border-radius: 1rem;
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        }
+        .card-body {
+            padding: 2rem;
+        }
+        .form-floating > .form-control:focus ~ label,
+        .form-floating > .form-control:not(:placeholder-shown) ~ label {
+            color: #0d6efd;
+        }
+        .btn-primary {
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+        }
+        .invalid-feedback {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-12 col-md-8 col-lg-6 col-xl-5">
+                <div class="card">
+                    <div class="card-body">
+                        <h2 class="card-title text-center mb-4">Create Your Account</h2>
+                        <p class="text-muted text-center">Join ShopEase and start shopping today.</p>
+
+                        <!-- Flash/error messages -->
+                        {% with messages = get_flashed_messages(with_categories=true) %}
+                            {% if messages %}
+                                {% for category, message in messages %}
+                                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                                        {{ message }}
+                                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                    </div>
+                                {% endfor %}
+                            {% endif %}
+                        {% endwith %}
+
+                        <!-- Registration form -->
+                        <form method="POST" action="" novalidate>
+                            <!-- CSRF token placeholder (if using FastAPI middleware, include hidden field) -->
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token if csrf_token else '' }}">
+
+                            <!-- Name -->
+                            <div class="form-floating mb-3">
+                                <input type="text" class="form-control {% if errors and errors.name %}is-invalid{% endif %}" id="name" name="name" placeholder="Your full name" value="{{ request.form.name or '' }}" required minlength="2" maxlength="100">
+                                <label for="name">Full Name</label>
+                                {% if errors and errors.name %}
+                                    <div class="invalid-feedback">
+                                        {% for error in errors.name %}
+                                            <span>{{ error }}</span>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Email -->
+                            <div class="form-floating mb-3">
+                                <input type="email" class="form-control {% if errors and errors.email %}is-invalid{% endif %}" id="email" name="email" placeholder="name@example.com" value="{{ request.form.email or '' }}" required>
+                                <label for="email">Email address</label>
+                                {% if errors and errors.email %}
+                                    <div class="invalid-feedback">
+                                        {% for error in errors.email %}
+                                            <span>{{ error }}</span>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Password -->
+                            <div class="form-floating mb-3">
+                                <input type="password" class="form-control {% if errors and errors.password %}is-invalid{% endif %}" id="password" name="password" placeholder="Password" required minlength="8" maxlength="128">
+                                <label for="password">Password</label>
+                                {% if errors and errors.password %}
+                                    <div class="invalid-feedback">
+                                        {% for error in errors.password %}
+                                            <span>{{ error }}</span>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">Must be at least 8 characters.</div>
+                            </div>
+
+                            <!-- Confirm Password -->
+                            <div class="form-floating mb-4">
+                                <input type="password" class="form-control {% if errors and errors.confirm_password %}is-invalid{% endif %}" id="confirm_password" name="confirm_password" placeholder="Confirm password" required>
+                                <label for="confirm_password">Confirm Password</label>
+                                {% if errors and errors.confirm_password %}
+                                    <div class="invalid-feedback">
+                                        {% for error in errors.confirm_password %}
+                                            <span>{{ error }}</span>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Submit button -->
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary btn-lg">Register</button>
+                            </div>
+
+                            <!-- Login link -->
+                            <p class="text-center mt-3 mb-0">
+                                Already have an account? <a href="/login" class="text-decoration-none">Log in</a>
+                            </p>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap 5 JS (for form validation feedback) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Optional: client-side password match validation -->
+    <script>
+        (function () {
+            'use strict';
+            const form = document.querySelector('form');
+            const password = document.getElementById('password');
+            const confirm = document.getElementById('confirm_password');
+
+            form.addEventListener('submit', function (event) {
+                if (!form.checkValidity() || password.value !== confirm.value) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    if (password.value !== confirm.value) {
+                        confirm.setCustomValidity('Passwords do not match.');
+                        confirm.classList.add('is-invalid');
+                    } else {
+                        confirm.setCustomValidity('');
+                        confirm.classList.remove('is-invalid');
+                    }
+                }
+                form.classList.add('was-validated');
+            }, false);
+        })();
+    </script>
+</body>
+</html>
