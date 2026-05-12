@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - E-Commerce</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        body {
+            font-size: .875rem;
+            background-color: #f8f9fa;
+        }
+        .sidebar {
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            z-index: 100;
+            padding: 48px 0 0;
+            box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
+            background-color: #343a40;
+        }
+        .sidebar .nav-link {
+            font-weight: 500;
+            color: rgba(255, 255, 255, .75);
+        }
+        .sidebar .nav-link:hover {
+            color: #fff;
+        }
+        .sidebar .nav-link.active {
+            color: #fff;
+            background-color: #495057;
+        }
+        .sidebar .nav-link i {
+            margin-right: 5px;
+        }
+        .main-content {
+            margin-left: 220px;
+            padding-top: 56px;
+        }
+        @media (max-width: 768px) {
+            .sidebar {
+                position: static;
+                padding-top: 0;
+                height: auto;
+            }
+            .main-content {
+                margin-left: 0;
+            }
+        }
+        .stats-card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        }
+        .stats-card .card-body {
+            padding: 1.25rem;
+        }
+        .stats-card .stats-icon {
+            font-size: 2rem;
+            opacity: 0.3;
+        }
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+        }
+        .table-container {
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        }
+        .badge-status {
+            font-size: 0.75rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Top Navbar -->
+    <nav class="navbar navbar-dark fixed-top bg-dark flex-md-nowrap p-0 shadow">
+        <a class="navbar-brand col-md-3 col-lg-2 me-0 px-3" href="#">Admin Dashboard</a>
+        <button class="navbar-toggler position-absolute d-md-none collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#sidebarMenu" aria-controls="sidebarMenu" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="w-100"></div>
+        <div class="navbar-nav">
+            <div class="nav-item text-nowrap">
+                <a class="nav-link px-3" href="/logout">Sign out</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Sidebar -->
+    <div class="container-fluid">
+        <div class="row">
+            <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block sidebar collapse">
+                <div class="position-sticky pt-3">
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link active" href="/admin/dashboard">
+                                <i class="bi bi-speedometer2"></i> Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/admin/products">
+                                <i class="bi bi-box"></i> Products
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/admin/categories">
+                                <i class="bi bi-tags"></i> Categories
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/admin/orders">
+                                <i class="bi bi-cart"></i> Orders
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/admin/users">
+                                <i class="bi bi-people"></i> Users
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+
+            <!-- Main content -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content">
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h2">Dashboard</h1>
+                    <div class="btn-toolbar mb-2 mb-md-0">
+                        <div class="btn-group me-2">
+                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="window.location.reload()">
+                                <i class="bi bi-arrow-repeat"></i> Refresh
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Stats Cards -->
+                <div class="row mb-4">
+                    <div class="col-sm-6 col-lg-3 mb-3">
+                        <div class="card stats-card bg-primary text-white">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h6 class="card-subtitle mb-1">Total Sales</h6>
+                                        <h2 class="card-title mb-0">${{ "%.2f"|format(stats.total_sales) }}</h2>
+                                    </div>
+                                    <i class="bi bi-currency-dollar stats-icon"></i>
+                                </div>
+                                <small class="text-white-50">All time revenue</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6 col-lg-3 mb-3">
+                        <div class="card stats-card bg-success text-white">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h6 class="card-subtitle mb-1">Orders</h6>
+                                        <h2 class="card-title mb-0">{{ stats.total_orders }}</h2>
+                                    </div>
+                                    <i class="bi bi-cart-check stats-icon"></i>
+                                </div>
+                                <small class="text-white-50">Total placed orders</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6 col-lg-3 mb-3">
+                        <div class="card stats-card bg-warning text-dark">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h6 class="card-subtitle mb-1">Users</h6>
+                                        <h2 class="card-title mb-0">{{ stats.total_users }}</h2>
+                                    </div>
+                                    <i class="bi bi-people stats-icon"></i>
+                                </div>
+                                <small class="text-muted">Registered users</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6 col-lg-3 mb-3">
+                        <div class="card stats-card bg-info text-white">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h6 class="card-subtitle mb-1">Products</h6>
+                                        <h2 class="card-title mb-0">{{ stats.total_products }}</h2>
+                                    </div>
+                                    <i class="bi bi-box-seam stats-icon"></i>
+                                </div>
+                                <small class="text-white-50">Active products</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sales Chart -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="card table-container">
+                            <div class="card-header bg-white">
+                                <h5 class="card-title mb-0"><i class="bi bi-graph-up me-2"></i>Sales Overview (Last 30 Days)</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="chart-container">
+                                    <canvas id="salesChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Orders Table -->
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card table-container">
+                            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                                <h5 class="card-title mb-0"><i class="bi bi-clock-history me-2"></i>Recent Orders</h5>
+                                <a href="/admin/orders" class="btn btn-sm btn-outline-secondary">View all</a>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table table-hover align-middle mb-0">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Order ID</th>
+                                                <th>Customer</th>
+                                                <th>Date</th>
+                                                <th>Status</th>
+                                                <th>Total</th>
+                                                <th>Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% if recent_orders %}
+                                                {% for order in recent_orders %}
+                                                <tr>
+                                                    <td>#{{ order.id }}</td>
+                                                    <td>{{ order.customer_name or 'N/A' }}</td>
+                                                    <td>{{ order.created_at.strftime('%b %d, %Y') }}</td>
+                                                    <td>
+                                                        {% set status_colors = {'pending': 'warning', 'processing': 'info', 'shipped': 'primary', 'delivered': 'success', 'cancelled': 'danger'} %}
+                                                        <span class="badge bg-{{ status_colors.get(order.status, 'secondary') }} badge-status">{{ order.status|capitalize }}</span>
+                                                    </td>
+                                                    <td>${{ "%.2f"|format(order.total) }}</td>
+                                                    <td>
+                                                        <a href="/admin/orders/{{ order.id }}" class="btn btn-sm btn-outline-secondary">
+                                                            <i class="bi bi-eye"></i>
+                                                        </a>
+                                                    </td>
+                                                </tr>
+                                                {% endfor %}
+                                            {% else %}
+                                                <tr>
+                                                    <td colspan="6" class="text-center py-4 text-muted">No orders yet.</td>
+                                                </tr>
+                                            {% endif %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Sales Chart Initialization -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const ctx = document.getElementById('salesChart').getContext('2d');
+
+            // Use sales_data from backend. If not provided, use empty arrays.
+            const salesData = {
+                labels: {{ sales_data.labels|tojson|default('[]') }},
+                values: {{ sales_data.values|tojson|default('[]') }}
+            };
+
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: salesData.labels,
+                    datasets: [{
+                        label: 'Sales ($)',
+                        data: salesData.values,
+                        backgroundColor: 'rgba(13, 110, 253, 0.2)',
+                        borderColor: 'rgba(13, 110, 253, 1)',
+                        borderWidth: 2,
+                        pointBackgroundColor: 'rgba(13, 110, 253, 1)',
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: 'rgba(13, 110, 253, 1)',
+                        tension: 0.3,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return '$' + context.parsed.y.toFixed(2);
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + value.toFixed(2);
+                                }
+                            },
+                            grid: {
+                                color: 'rgba(0,0,0,0.05)'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>
